@@ -1,6 +1,7 @@
 package org.ausbildungstracker.project
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
+import kotlinproject_ausbildungstracker.composeapp.generated.resources.Res
+import kotlinproject_ausbildungstracker.composeapp.generated.resources.pferd
+import kotlinproject_ausbildungstracker.composeapp.generated.resources.pferd2
 
 // --- Zentrale Farbdefinitionen ---
 val FeuerwehrRot  = Color(0xFF7D0B23)
@@ -112,7 +117,7 @@ fun SplashScreen() {
             Text(text = "MGA", color = FeuerwehrGold, fontSize = 42.sp, fontWeight = FontWeight.ExtraBold)
             Text(text = "in Niedersachsen", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Normal)
             Spacer(Modifier.height(50.dp))
-            Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = FeuerwehrGold, modifier = Modifier.size(100.dp))
+            Image(painterResource(Res.drawable.pferd), contentDescription = null, modifier = Modifier.size(120.dp))
             Spacer(Modifier.height(25.dp))
             Text("Retten · Löschen · Bergen · Schützen", color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Medium)
         }
@@ -130,6 +135,9 @@ fun MainApp(vm: AppViewModel) {
         topBar = {
             TopAppBar(
                 title = { Text("Ausbildungs-Tracker", color = Color.White) },
+                navigationIcon = {
+                    Image(painterResource(Res.drawable.pferd2), contentDescription = null, modifier = Modifier.size(40.dp).padding(start = 8.dp))
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = FeuerwehrRot),
                 actions = {
                     IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = null, tint = Color.White) }
