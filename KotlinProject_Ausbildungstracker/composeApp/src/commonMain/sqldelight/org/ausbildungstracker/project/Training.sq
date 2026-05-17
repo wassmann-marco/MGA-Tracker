@@ -1,0 +1,22 @@
+CREATE TABLE TrainingEntry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    modulId TEXT NOT NULL,
+    datum TEXT NOT NULL,
+    startStunde INTEGER NOT NULL,
+    startMinute INTEGER NOT NULL,
+    endeStunde INTEGER NOT NULL,
+    endeMinute INTEGER NOT NULL,
+    ausbilder TEXT NOT NULL,
+    bemerkung TEXT NOT NULL,
+    qs TEXT NOT NULL -- Wir speichern das Enum einfach als Text "QS1" oder "QS2"
+);
+
+alleEintraege:
+SELECT * FROM TrainingEntry ORDER BY datum DESC, startStunde DESC;
+
+einfuegen:
+INSERT OR REPLACE INTO TrainingEntry(modulId, datum, startStunde, startMinute, endeStunde, endeMinute, ausbilder, bemerkung, qs)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+loeschen:
+DELETE FROM TrainingEntry WHERE id = ?;

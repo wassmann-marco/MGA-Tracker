@@ -1,0 +1,11 @@
+KotlinProject_Ausbildungstracker.zip
+source/
+.claude/
+KotlinProject_Ausbildungstracker/composeApp/*.db
+KotlinProject_Ausbildungstracker/composeApp/*.log
+KotlinProject_Ausbildungstracker/.gradle/
+KotlinProject_Ausbildungstracker/.idea/
+KotlinProject_Ausbildungstracker/.kotlin/
+KotlinProject_Ausbildungstracker/build/
+KotlinProject_Ausbildungstracker/composeApp/build/
+KotlinProject_Ausbildungstracker/local.properties
