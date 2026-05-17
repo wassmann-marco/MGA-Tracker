@@ -29,8 +29,7 @@ interface TrainingRepository {
     fun holeAlleEintraege(): Flow<List<TrainingEintrag>>
     suspend fun speichereEintrag(eintrag: TrainingEintrag)
     suspend fun loescheEintrag(id: Long)
-
-    // NEU: Für den Auto-Save
+    suspend fun loescheAlleEintraege()
     suspend fun laden(): List<TrainingEintrag>
     suspend fun speichereProfil(profil: UserProfile)
     suspend fun ladeProfil(): UserProfile?

@@ -66,6 +66,11 @@ class WebRepository : TrainingRepository {
         localStorage.setItem(key, jsonKonfig.encodeToString(ListSerializer(TrainingEintrag.serializer()), liste))
     }
 
+    override suspend fun loescheAlleEintraege() {
+        speicher.value = emptyList()
+        localStorage.removeItem(key)
+    }
+
     override suspend fun speichereProfil(profil: UserProfile) {
         val json = jsonKonfig.encodeToString(UserProfile.serializer(), profil)
         localStorage.setItem(profilKey, json)

@@ -59,6 +59,11 @@ class DesktopRepository : TrainingRepository {
         saveDataToFile(neueListe)
     }
 
+    override suspend fun loescheAlleEintraege() {
+        speicher.value = emptyList()
+        if (archivDatei.exists()) archivDatei.delete()
+    }
+
     private fun saveDataToFile(liste: List<TrainingEintrag>) {
         try {
             val text = jsonKonfig.encodeToString(ListSerializer(TrainingEintrag.serializer()), liste)

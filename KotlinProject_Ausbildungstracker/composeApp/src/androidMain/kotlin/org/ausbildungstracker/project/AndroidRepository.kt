@@ -41,6 +41,11 @@ class AndroidRepository : TrainingRepository {
         prefs.edit().putString("eintraege", jsonKonfig.encodeToString(ListSerializer(TrainingEintrag.serializer()), liste)).apply()
     }
 
+    override suspend fun loescheAlleEintraege() {
+        speicher.value = emptyList()
+        prefs.edit().remove("eintraege").apply()
+    }
+
     override suspend fun speichereProfil(profil: UserProfile) {
         prefs.edit().putString("profil", jsonKonfig.encodeToString(UserProfile.serializer(), profil)).apply()
     }

@@ -130,6 +130,29 @@ fun MainApp(vm: AppViewModel) {
     val scope = rememberCoroutineScope()
     var currentTab by remember { mutableStateOf(Tab.OVERVIEW) }
     var menuExpanded by remember { mutableStateOf(false) }
+    val pendingImport by vm.pendingImport.collectAsState()
+
+    if (pendingImport != null) {
+        AlertDialog(
+            onDismissRequest = { vm.abbrechenImport() },
+            icon = { Icon(Icons.Default.Info, null, tint = FeuerwehrRot) },
+            title = { Text("Daten importieren") },
+            text = { Text("${pendingImport!!.size} Einträge gefunden.\n\n• Hinzufügen: Zusammenführen mit bestehenden Daten.\n• Ersetzen: Alle vorhandenen Daten werden gelöscht.") },
+            confirmButton = {
+                Button(
+                    onClick = { vm.bestaetigeImportErsetzen() },
+                    colors = ButtonDefaults.buttonColors(containerColor = FeuerwehrRot)
+                ) { Text("Ersetzen") }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { vm.abbrechenImport() }) { Text("Abbrechen", color = Color.Gray) }
+                    Spacer(Modifier.width(4.dp))
+                    TextButton(onClick = { vm.bestaetigeImportHinzufuegen() }) { Text("Hinzufügen", color = FeuerwehrRot) }
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -282,6 +305,34 @@ fun OverviewScreen(vm: AppViewModel, onNavigateToProgress: (QS) -> Unit = {}) {
         QSCard("QS 1 Einsatzfähigkeit", qs1Ist, qs1Soll, qs1Prozent) { onNavigateToProgress(QS.QS1) }
         Spacer(modifier = Modifier.height(12.dp))
         QSCard("QS 2 Truppmitglied", qs2Ist, qs2Soll, qs2Prozent) { onNavigateToProgress(QS.QS2) }
+
+        val letzteEintraege = eintraege.sortedByDescending { parseDateToEpochDays(it.datum) }.take(3)
+        if (letzteEintraege.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Zuletzt eingetragen", fontSize = 14.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            letzteEintraege.forEach { e ->
+                val modulName = alleModule.find { it.id == e.modulId }?.name ?: e.modulId
+                val ue = ((e.endeH * 60 + e.endeM) - (e.startH * 60 + e.startM)) / 45.0
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("${e.datum} • ${e.ausbilder}", fontSize = 12.sp, color = Color.Gray)
+                            Text(modulName, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text("${formatUE(ue)} UE", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FeuerwehrRot)
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
@@ -505,6 +556,23 @@ fun QSSelectorBox(label: String, prozent: Float, isSelected: Boolean, modifier: 
 @Composable
 fun ModulItem(modul: Modul, vm: AppViewModel, eintraege: List<TrainingEintrag>, onNavigateToAdd: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
+    var zuLoeschenId by remember { mutableStateOf<Long?>(null) }
+
+    if (zuLoeschenId != null) {
+        AlertDialog(
+            onDismissRequest = { zuLoeschenId = null },
+            icon = { Icon(Icons.Default.Warning, null, tint = FeuerwehrRot) },
+            title = { Text("Eintrag löschen?") },
+            text = { Text("Dieser Eintrag wird unwiderruflich gelöscht.") },
+            confirmButton = {
+                Button(
+                    onClick = { vm.loeschen(zuLoeschenId!!); zuLoeschenId = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = FeuerwehrRot)
+                ) { Text("Löschen") }
+            },
+            dismissButton = { TextButton(onClick = { zuLoeschenId = null }) { Text("Abbrechen", color = Color.Gray) } }
+        )
+    }
     val istUE = vm.getIstUE(eintraege, modul.id)
     val sollUE = modul.sollStunden
     val progress = if (sollUE > 0) (istUE / sollUE).toFloat().coerceIn(0f, 1f) else 0f
@@ -525,7 +593,7 @@ fun ModulItem(modul: Modul, vm: AppViewModel, eintraege: List<TrainingEintrag>, 
             androidx.compose.animation.AnimatedVisibility(visible = expanded) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
                     HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
-                    val modulEintraege = eintraege.filter { it.modulId == modul.id }
+                    val modulEintraege = eintraege.filter { it.modulId == modul.id }.sortedByDescending { parseDateToEpochDays(it.datum) }
                     if (modulEintraege.isEmpty()) { Text("Keine Einträge", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 8.dp)) }
                     else {
                         modulEintraege.forEach { e ->
@@ -540,7 +608,7 @@ fun ModulItem(modul: Modul, vm: AppViewModel, eintraege: List<TrainingEintrag>, 
                                 Text("${formatUE(ue)} UE", fontSize = 12.sp, fontWeight = FontWeight.Bold); Spacer(modifier = Modifier.width(12.dp))
                                 IconButton(onClick = { vm.eintragZumBearbeiten.value = e; onNavigateToAdd() }, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Edit, null, tint = FeuerwehrGold, modifier = Modifier.size(18.dp)) }
                                 Spacer(modifier = Modifier.width(8.dp))
-                                IconButton(onClick = { vm.loeschen(e.id) }, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Close, null, tint = FeuerwehrRot, modifier = Modifier.size(18.dp)) }
+                                IconButton(onClick = { zuLoeschenId = e.id }, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Close, null, tint = FeuerwehrRot, modifier = Modifier.size(18.dp)) }
                             }
                         }
                     }
@@ -563,7 +631,8 @@ fun ProfileScreen(vm: AppViewModel) {
     LaunchedEffect(profile) { vorname = profile.vorname; nachname = profile.name; ortswehr = profile.ortsfeuerwehr; startDatum = profile.ausbildungsstart }
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = aktuellesDatumMillis())
+        val initialMillis = if (startDatum.isNotBlank()) parseDateToEpochDays(startDatum) * 86400000L else aktuellesDatumMillis()
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = { TextButton(onClick = { datePickerState.selectedDateMillis?.let { startDatum = formatiereDatum(it) }; showDatePicker = false }) { Text("OK", color = FeuerwehrRot) } },
@@ -593,7 +662,7 @@ fun ProfileScreen(vm: AppViewModel) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(text = "Entwickelt von:", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(text = "Marco Waßmann / FF Hehlen", fontWeight = FontWeight.Bold, color = FeuerwehrRot, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-                Text(text = "Version 1.2", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                Text(text = "Version 1.21", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             }
         }
         Spacer(modifier = Modifier.height(16.dp))

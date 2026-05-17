@@ -34,12 +34,29 @@ class AppViewModel(private val repository: TrainingRepository) : ViewModel() {
         return Json { prettyPrint = true }.encodeToString(ListSerializer(TrainingEintrag.serializer()), eintraege.value)
     }
 
+    val pendingImport = MutableStateFlow<List<TrainingEintrag>?>(null)
+
     fun importiereDatenAusJson(json: String) = viewModelScope.launch {
         try {
             val importierteListe = Json { ignoreUnknownKeys = true }.decodeFromString(ListSerializer(TrainingEintrag.serializer()), json)
-            importierteListe.forEach { repository.speichereEintrag(it) }
+            pendingImport.value = importierteListe
         } catch (e: Exception) { println("Fehler: ${e.message}") }
     }
+
+    fun bestaetigeImportErsetzen() = viewModelScope.launch {
+        val liste = pendingImport.value ?: return@launch
+        repository.loescheAlleEintraege()
+        liste.forEach { repository.speichereEintrag(it) }
+        pendingImport.value = null
+    }
+
+    fun bestaetigeImportHinzufuegen() = viewModelScope.launch {
+        val liste = pendingImport.value ?: return@launch
+        liste.forEach { repository.speichereEintrag(it) }
+        pendingImport.value = null
+    }
+
+    fun abbrechenImport() { pendingImport.value = null }
 
     val eintraege: StateFlow<List<TrainingEintrag>> = repository.holeAlleEintraege()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
