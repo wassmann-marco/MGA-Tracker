@@ -289,8 +289,6 @@ fun OverviewScreen(vm: AppViewModel, onNavigateToProgress: (QS) -> Unit = {}) {
         Text("MGA Niedersachsen", fontSize = 12.sp, color = Color.Gray)
         Spacer(modifier = Modifier.height(16.dp))
 
-        CountdownCard(profile.ausbildungsstart)
-
         Card(colors = CardDefaults.cardColors(containerColor = FeuerwehrRot), shape = RoundedCornerShape(12.dp)) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                 Text("Gesamtfortschritt", color = Color.White, fontWeight = FontWeight.Bold)
@@ -298,7 +296,9 @@ fun OverviewScreen(vm: AppViewModel, onNavigateToProgress: (QS) -> Unit = {}) {
                 LinearProgressIndicator(progress = { gesamtProzent }, modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(50)), color = FeuerwehrGold)
             }
         }
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+        StatsBarCard(eintraege, vm)
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text("Qualifikationsstufen", fontSize = 14.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
@@ -333,7 +333,48 @@ fun OverviewScreen(vm: AppViewModel, onNavigateToProgress: (QS) -> Unit = {}) {
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        CountdownCard(profile.ausbildungsstart)
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+fun StatsBarCard(eintraege: List<TrainingEintrag>, vm: AppViewModel) {
+    val abgeschlossen = alleModule.count { modul -> vm.getIstUE(eintraege, modul.id) >= modul.sollStunden }
+    val gesamtModule = alleModule.size
+    val anrechenbarUE = alleModule.sumOf { modul ->
+        val ist = vm.getIstUE(eintraege, modul.id)
+        if (ist > modul.sollStunden) modul.sollStunden else ist
+    }
+    val tatsaechlichUE = alleModule.sumOf { modul -> vm.getIstUE(eintraege, modul.id) }
+    val maxUE = alleModule.sumOf { it.sollStunden }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = if (abgeschlossen == gesamtModule) Color(0xFF2E7D32) else FeuerwehrRot, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.height(4.dp))
+                Text("$abgeschlossen / $gesamtModule", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.DarkGray)
+                Text("Module", fontSize = 11.sp, color = Color.Gray)
+            }
+            Box(modifier = Modifier.width(1.dp).height(72.dp).align(Alignment.CenterVertically).background(Color.LightGray))
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Default.Star, contentDescription = null, tint = FeuerwehrGold, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.height(4.dp))
+                Text("${formatUE(anrechenbarUE)} / ${maxUE.toInt()} UE", fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = Color.DarkGray)
+                Text("anrechenbar", fontSize = 11.sp, color = Color.Gray)
+                Spacer(Modifier.height(4.dp))
+                Text("${formatUE(tatsaechlichUE)} UE geleistet", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+            }
+        }
     }
 }
 
