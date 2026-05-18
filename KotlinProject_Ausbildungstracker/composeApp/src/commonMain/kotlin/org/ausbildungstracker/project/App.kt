@@ -703,7 +703,7 @@ fun ProfileScreen(vm: AppViewModel) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(text = "Entwickelt von:", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(text = "Marco Waßmann / FF Hehlen", fontWeight = FontWeight.Bold, color = FeuerwehrRot, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-                Text(text = "Version 1.21", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                Text(text = "Version 1.22", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
